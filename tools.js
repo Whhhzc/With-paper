@@ -304,6 +304,7 @@ const Tools = (() => {
     document.querySelectorAll('.settings-panel input,.settings-panel select').forEach(input => input.disabled = processing);
     document.querySelector('#file-feedback').textContent = state.feedback;
     const area = document.querySelector('#file-content');
+    animateFileState(area);
     if (processing) { area.innerHTML = '<div class="progress-area"><h2>正在本地处理</h2><p id="progress-label" role="status">准备文件…</p><div class="progress-track" role="progressbar" aria-label="处理进度" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill"></div></div><button class="text-button cancel-processing" data-action="cancel">取消处理</button></div>'; return; }
     if (state.phase === 'result') { renderResults(area); return; }
     if (!count) { area.innerHTML = `<div class="drop-zone"><button class="primary" data-action="choose">${icon('upload')}选择${imageInput() ? '图片' : id() === 'rename' ? '文件' : 'PDF 文件'}</button><p>点击选择或拖入文件${single() ? '，一次处理一份 PDF' : '，支持多个文件'}</p><span class="drop-local">文件只在本机处理，不上传服务器</span></div><p class="sample-line">暂时没有文件？<button data-action="samples">使用示例文件体验</button></p>`; return; }

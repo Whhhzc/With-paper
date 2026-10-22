@@ -45,6 +45,39 @@ tools.push({id:'remove-watermark',name:'去除 PDF 水印',desc:'选择并移除
 tools.splice(1,0,{id:'edit-pdf',name:'编辑 PDF',desc:'修改原有文字和图片，同步预览后下载',group:'pdf',icon:'rename'});
 tools.forEach(tool=>tool.ready=true);
 const main = document.querySelector('main');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+function animateEntrance(element, distance=8){
+  element.getAnimations().forEach(animation=>animation.cancel());
+  if(reducedMotion.matches)return;
+  element.animate([{opacity:.45,transform:`translateY(${distance}px)`},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.2,.7,.2,1)'});
+}
+function animateFileState(area){
+  const next=`${state.phase}:${state.files.length}`;
+  if(area.dataset.motionState&&area.dataset.motionState!==next)animateEntrance(area,6);
+  area.dataset.motionState=next;
+}
+reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)document.getAnimations().forEach(animation=>animation.cancel());});
+let clickEffectIndex=0;
+document.addEventListener('click',event=>{
+  if(event.button!==0||event.detail!==1||reducedMotion.matches||(event.pointerType&&event.pointerType!=='mouse'))return;
+  if(event.target.closest('input,textarea,select,label,[contenteditable]:not([contenteditable="false"]),[role="textbox"],:disabled,[aria-disabled="true"],dialog,#content-edit-stage,#content-preview-stage')||!getSelection().isCollapsed)return;
+  let layer=document.querySelector('#click-effects');
+  if(!layer){layer=document.createElement('div');layer.id='click-effects';layer.setAttribute('aria-hidden','true');document.body.append(layer);}
+  if(layer.childElementCount>=6)layer.firstElementChild.remove();
+  const kind=['ring','dots','rays'][clickEffectIndex++%3];
+  const effect=document.createElement('span');effect.className=`click-effect click-effect-${kind}`;
+  effect.style.left=`${event.clientX}px`;effect.style.top=`${event.clientY}px`;layer.append(effect);
+  const animations=[];
+  for(let i=0;i<(kind==='ring'?2:6);i++){
+    const particle=document.createElement('i');effect.append(particle);
+    const angle=i*Math.PI/3;
+    const start=kind==='ring'?'scale(.2)':`translate(0,0) rotate(${i*60+90}deg) scale(.7)`;
+    const end=kind==='ring'?'scale(1)':`translate(${Math.cos(angle)*24}px,${Math.sin(angle)*24}px) rotate(${i*60+90}deg) scale(.35)`;
+    animations.push(particle.animate([{opacity:.65,transform:start},{opacity:0,transform:end}],{duration:420,delay:kind==='ring'?i*65:0,easing:'cubic-bezier(.15,.65,.3,1)',fill:'both'}));
+  }
+  Promise.all(animations.map(animation=>animation.finished)).then(()=>effect.remove(),()=>effect.remove());
+},{capture:true});
+
 function fileBadge(tool){
   const glyphs={
     merge:'<path d="M7 8h8v11H7zM17 13h8v11h-8z" fill="none" stroke="white" stroke-width="2"/><path d="M14 24h-4v-3m8-13h4v3" fill="none" stroke="white" stroke-width="2"/>',
@@ -130,7 +163,7 @@ document.addEventListener('click',e=>{
  if(action==='choose')document.querySelector('#file-input').click();
 });
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)&&!document.querySelector('dialog').open){const search=document.querySelector('#tool-search');if(search){e.preventDefault();search.focus();}}});
-document.querySelector('#tool-search').addEventListener('input',e=>{if(!state.tool){state.query=e.target.value;filterTools();}});
+document.querySelector('#tool-search').addEventListener('input',e=>{if(!state.tool){state.query=e.target.value;filterTools();animateEntrance(document.querySelector('#tool-list'),4);}});
 document.querySelector('#global-search').addEventListener('submit',e=>{
  e.preventDefault();const query=document.querySelector('#tool-search').value;
  history.pushState(null,'','#home');route();state.query=query;
@@ -160,7 +193,7 @@ function route(){
  main.className=state.tool?'page-workspace':'page-home';
  document.body.classList.toggle('workspace-open',Boolean(state.tool));
  state.group=state.tool?.group||(type==='category'&&groups.some(g=>g[0]===id)?id:'all');
- state.query='';document.querySelector('#tool-search').value='';navigation();if(state.tool)renderWorkspace();else renderHome();window.scrollTo(0,0);
+ state.query='';document.querySelector('#tool-search').value='';navigation();if(state.tool)renderWorkspace();else renderHome();window.scrollTo(0,0);animateEntrance(main);
 }
 window.addEventListener('hashchange',()=>{route();main.focus({preventScroll:true});});
 route();

@@ -119,6 +119,7 @@ const Merge = (() => {
     document.querySelectorAll('.settings-panel input,.settings-panel select').forEach(input => input.disabled = processing);
     document.querySelector('#file-feedback').textContent = state.feedback;
     const area = document.querySelector('#file-content');
+    animateFileState(area);
     if (processing) {
       area.innerHTML = `<div class="progress-area"><h2>${state.phase === 'reading' ? '正在读取 PDF' : '正在合并 PDF'}</h2><p id="progress-label" role="status">准备文件…</p><div class="progress-track" role="progressbar" aria-label="PDF 处理进度" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill"></div></div><button class="text-button cancel-processing" data-action="cancel">取消处理</button></div>`;
       return;

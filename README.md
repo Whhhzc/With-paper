@@ -83,25 +83,6 @@ python -m http.server 4186 --bind 127.0.0.1 --directory dist
 
 修改源码后，重新执行 `npm run build`，再刷新预览页面。
 
-## 部署到 Vercel
-
-将本项目作为独立 GitHub 仓库导入 Vercel，使用以下配置：
-
-| 配置项 | 值 |
-| --- | --- |
-| Framework Preset | `Other` |
-| Root Directory | 仓库根目录 |
-| Node.js | `24.x` |
-| Install Command | `npm ci` |
-| Build Command | `npm run build` |
-| Output Directory | `dist` |
-
-项目已提供 `vercel.json`，配置了安装命令、构建命令和输出目录。当前功能无需配置环境变量、API 密钥或数据库。
-
-也可以将完整的 `dist/` 目录部署到其他支持 HTTP/HTTPS 的静态托管服务。请保留其中的 `vendor/` 资源及第三方许可文件。
-
-更多部署说明见 [DEPLOYMENT.md](DEPLOYMENT.md)。
-
 ## 使用提示与已知限制
 
 - **页码范围**：支持 `1-3,5` 等格式；旋转和提取时留空表示全部页面。重新排序需要包含全部页面，且不能重复。
@@ -146,8 +127,7 @@ python -m http.server 4186 --bind 127.0.0.1 --directory dist
 ├── licenses/              # 许可文件
 ├── vendor/                # 本地引擎、字体、模型与第三方资源
 ├── dist/                  # 构建生成的静态站点
-├── package.json           # 依赖与命令
-└── vercel.json            # Vercel 构建配置
+└── package.json           # 依赖与命令
 ```
 
 ## 开发检查
