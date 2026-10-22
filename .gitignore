@@ -1,0 +1,23 @@
+review/browser-qa/
+review/chrome-profile/
+review/*.log
+node_modules/
+review/merge-downloads/
+review/content-editor-results/downloads/
+review/content-editor-results/*.pdf
+review/native-probe.pdf
+dist/
+.vercel/
+review/deploy-validation/
+
+# Generated test outputs and local development notes
+review/merge-fixtures/
+review/phase-one-fixtures/
+review/phase-one-results/
+review/content-editor-results/
+review/*.png
+review/*.json
+/task_plan.md
+/findings.md
+/progress.md
+/PERSONAL-GITHUB.md

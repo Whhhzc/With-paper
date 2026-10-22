@@ -1,0 +1,35 @@
+import {connect,check,folder,baseUrl} from './browser-session.mjs';
+import {writeFile} from 'node:fs/promises';
+import path from 'node:path';
+const b=await connect();const output=path.join(folder,'phase-one-results');
+const cases=[['ocr-image','ocr-source.png'],['ocr-pdf','image.pdf']];
+const results=[];
+for(const [tool,file] of cases){
+ await b.navigate(tool);await b.upload([path.join(output,file)]);
+ await b.click('[data-action="run"]');
+ await b.until('state.phase==="result"||(state.phase==="select"&&!!state.feedback)',120);
+ check(await b.evaluate('state.phase==="result"'),await b.evaluate('state.feedback'));
+ const text=await b.evaluate('document.querySelector("#ocr-text").value');
+ check(/office\s+meeting/i.test(text),'Actual English OCR text');
+ check(text.replace(/\s/g,'').includes('办公会议记录'),'Actual Chinese OCR text');
+ await writeFile(path.join(output,`${tool}.txt`),text);
+ await b.shot(`phase-one-${tool}.png`);
+ await b.input('#ocr-text','人工核对后的文字\nReviewed text');
+ await b.send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:output});
+ await b.click('[data-action="save-text"]');
+ results.push({tool,text});
+ console.log(`PASS: ${tool} recognized Chinese and English from actual file.`);
+}
+await b.navigate('ocr-image');await b.upload([path.join(output,'ocr-source.png')]);
+await b.evaluate('document.querySelector("[data-action=run]").click();document.querySelector("[data-action=cancel]").click()');
+await b.until('state.phase==="select"');
+check(await b.evaluate('!document.querySelector("#ocr-text")'),'Cancellation leaves no stale OCR results');
+await b.navigate('ocr-image');await b.click('[data-action="clear"]');await b.upload([path.join(output,'ocr-source.png'),path.join(output,'rendered.png')]);
+await b.click('[data-action="run"]');await b.until('state.phase==="result"||(state.phase==="select"&&!!state.feedback)',120);
+check(await b.evaluate('state.phase==="result"'),await b.evaluate('state.feedback'));
+check(await b.evaluate('document.querySelectorAll(".output-row").length===2'),'Batch OCR creates two text files');
+await b.saveBlob('.output-list p a[download]',path.join(output,'ocr-batch.zip'));
+const external=b.requests.filter(item=>/^https?:/.test(item.url)&&(!item.url.startsWith(`${baseUrl}/`)||item.method!=='GET'));
+check(!external.length,'OCR makes no external requests or uploads');check(!b.errors.length,'No OCR JavaScript exceptions');
+await writeFile(path.join(output,'ocr-checks.json'),JSON.stringify({status:'passed',results,external,errors:b.errors},null,2));
+console.log('PASS: batch OCR ZIP, edited TXT download and cancel.');b.close();

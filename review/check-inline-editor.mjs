@@ -1,0 +1,44 @@
+import {connect,check,folder} from './browser-session.mjs';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+const b=await connect(),out=path.join(folder,'content-editor-results'),downloads=path.join(out,'downloads',String(Date.now()));await mkdir(downloads,{recursive:true});
+await b.send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
+const ready=async()=>{await b.until('document.querySelector("#content-preview-status")?.classList.contains("error")||document.querySelector("#content-download")?.disabled===false',60);check(await b.evaluate('document.querySelector("#content-download")?.disabled===false'),await b.evaluate('document.querySelector("#content-preview-status")?.textContent'));};
+await b.navigate('edit-pdf');const{root}=await b.send('DOM.getDocument');const{nodeId}=await b.send('DOM.querySelector',{nodeId:root.nodeId,selector:'#content-pdf-input'});await b.send('DOM.setFileInputFiles',{nodeId,files:[path.join(out,'original.pdf')]});await ready();
+check(await b.evaluate('!!document.querySelector("#content-edit-paper canvas")&&!!document.querySelector("#content-preview-paper canvas")&&!document.querySelector("#content-edit-list")'),'Both panes show PDF pages, no text-card list');
+const clickHit=async(id)=>{
+ const point=await b.evaluate(`(()=>{const button=document.querySelector('[data-inline-select="${id}"]');button.scrollIntoView({block:'center'});const rect=button.getBoundingClientRect();return {x:rect.left+rect.width/2,y:rect.top+rect.height/2}})()`);
+ await b.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point});await b.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
+};
+await clickHit('0:0');await b.until('!!document.querySelector(".content-inline-edit")');
+check(await b.evaluate('document.querySelector(".content-inline-edit").value==="ORIGINAL TEXT"'),'Click existing PDF text activates on-page editing');
+await b.input('.content-inline-edit','INLINE REVISED');await b.click('[data-content-locate]');await ready();
+await b.until('document.querySelector("#content-preview-marker")?.hidden===false');
+check(!b.errors.length,JSON.stringify(b.errors));
+await b.click('[data-content-add]');await b.until('document.querySelector(".content-inline-edit")?.dataset.contentId.startsWith("new-")');
+await b.input('.content-inline-edit','新增合同说明\n付款期限为30天');
+await b.input('[data-content-property=fontSize]','16');await b.input('[data-content-property=gap]','8');await ready();
+const addedId=await b.evaluate('document.querySelector(".content-inline-edit").dataset.contentId');
+await b.click('[data-content-locate]');
+check(await b.evaluate('!document.querySelector("#content-preview-marker").hidden'),'Inserted paragraph can be located');
+await b.saveBlob('#content-preview-open',path.join(out,'inline-added-preview.pdf'));await b.input('#content-output-name','inline-added');await b.click('[data-content-action=download]');
+let data;for(let i=0;i<60;i++){try{data=await readFile(path.join(downloads,'inline-added.pdf'));break;}catch{await new Promise(resolve=>setTimeout(resolve,100));}}
+check(data?.equals(await readFile(path.join(out,'inline-added-preview.pdf'))),'Download is the preview version, not the editing-mask PDF');
+await writeFile(path.join(out,'inline-added-download.pdf'),data);
+await b.shot('inline-editor-desktop.png');
+await b.click('[data-content-remove]');await ready();await b.saveBlob('#content-preview-open',path.join(out,'inline-added-deleted.pdf'));
+await b.click('[data-content-action=undo]');await ready();check(await b.evaluate('document.querySelector(".content-inline-edit")?.value.includes("新增合同说明")'),'Undo restores inserted paragraph and editable text');
+await b.input('#content-edit-zoom','1.5');check(await b.evaluate('document.querySelector("#content-edit-paper").clientWidth>document.querySelector("#content-edit-stage").clientWidth'),'Editing zoom enlarges the PDF inside its own scroll area');
+await b.input('#content-edit-zoom','1');
+await b.input('#content-page','1');await ready();await clickHit('1:0');await ready();
+await b.input('.content-inline-edit','ROTATED INLINE');await b.click('[data-content-locate]');await ready();await b.until('document.querySelector("#content-preview-marker")?.hidden===false');
+const located=await b.evaluate(`(()=>{const m=document.querySelector('#content-preview-marker').getBoundingClientRect(),s=document.querySelector('#content-preview-stage').getBoundingClientRect();return {width:m.width,height:m.height,visible:m.bottom>s.top&&m.top<s.bottom&&m.right>s.left&&m.left<s.right}})()`);
+check(located.visible&&located.width>0&&located.height>0,'Rotated/cropped-page location marker is visible');
+const ink=await b.evaluate(`(()=>{const canvas=document.querySelector('#content-preview-paper canvas'),marker=document.querySelector('#content-preview-marker');const x=Math.max(0,Math.floor(parseFloat(marker.style.left)/100*canvas.width)),y=Math.max(0,Math.floor(parseFloat(marker.style.top)/100*canvas.height));const w=Math.min(canvas.width-x,Math.ceil(parseFloat(marker.style.width)/100*canvas.width)),h=Math.min(canvas.height-y,Math.ceil(parseFloat(marker.style.height)/100*canvas.height));const data=canvas.getContext('2d').getImageData(x,y,w,h).data;let count=0;for(let i=0;i<data.length;i+=4)if(data[i]<100&&data[i+1]<100&&data[i+2]<100)count++;return count})()`);
+check(ink>20,'Location marker encloses actual rendered text on the rotated/cropped PDF');
+await b.saveBlob('#content-preview-open',path.join(out,'inline-rotated.pdf'));
+await b.input('#content-page','0');await ready();await clickHit('0:3');await ready();await b.click('[data-content-locate]');check(await b.evaluate('!document.querySelector("#content-preview-marker").hidden'),'Image location works');
+for(const width of [375,768,1440]){await b.send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});check(await b.evaluate('document.documentElement.scrollWidth<=innerWidth'),`No document overflow ${width}`);if(width===375)await b.shot('inline-editor-mobile.png');}
+check(!b.errors.length,JSON.stringify(b.errors));
+await writeFile(path.join(out,'inline-checks.json'),JSON.stringify({status:'passed',addedId,located,errors:b.errors},null,2));
+console.log('PASS: PDF canvas editing, locate including queued/rotated/image cases, native paragraph insertion, undo, zoom and exact preview download.');b.close();
