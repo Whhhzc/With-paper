@@ -8,4 +8,5 @@ for (const name of ['index.html', 'styles.css', 'app.js', 'local-job.js', 'media
   fs.copyFileSync(path.join(root, name), path.join(output, name));
 }
 fs.cpSync(path.join(root, 'vendor'), path.join(output, 'vendor'), { recursive: true });
+if (fs.existsSync(path.join(root, 'assets'))) fs.cpSync(path.join(root, 'assets'), path.join(output, 'assets'), { recursive: true });
 console.log('Static website packaged in dist/.');

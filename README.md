@@ -144,3 +144,9 @@ npm run test:pdf
 ## 第三方组件与许可
 
 PDF 引擎、OCR 模型、字体等第三方组件的版本、来源和许可证见 [THIRD-PARTY.md](THIRD-PARTY.md)。相关许可与声明随项目和构建资源保留。
+
+## 支持作者收款码配置
+
+页脚和工具结果区提供自愿支持入口。将真实收款码图片放入 `assets/support/`，例如 `wechat.png` 和 `alipay.png`，然后在 `app.js` 的 `supportMethods` 中，将对应 `image` 从空字符串改为 `assets/support/wechat.png` 或 `assets/support/alipay.png`。重新执行 `npm run build` 并部署 `dist/`，图片会随网站发布。
+
+未配置或加载失败的支付方式显示“收款码暂未开放”。此功能只展示收款码、提供图片保存，不自动判断付款成功，也不限制免费工具使用。

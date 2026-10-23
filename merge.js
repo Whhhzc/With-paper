@@ -125,7 +125,7 @@ const Merge = (() => {
       return;
     }
     if (result && state.phase === 'result') {
-      area.innerHTML = `<div class="result-panel"><div class="result-icon">${icon('check')}</div><h2>PDF 合并完成</h2><p><strong>${escapeHTML(result.filename)}</strong><br>${count} 个文件 · ${result.pages} 页 · ${result.size}</p><div class="result-actions"><a class="primary" href="${result.url}" download="${escapeHTML(result.filename)}">${icon('download')}下载 PDF</a><a class="secondary" href="${result.url}" target="_blank" rel="noopener">查看合并结果</a></div><button class="text-button" data-action="cancel">返回文件列表</button></div>`;
+      area.innerHTML = `<div class="result-panel"><div class="result-icon">${icon('check')}</div><h2>PDF 合并完成</h2><p><strong>${escapeHTML(result.filename)}</strong><br>${count} 个文件 · ${result.pages} 页 · ${result.size}</p><div class="result-actions"><a class="primary" href="${result.url}" download="${escapeHTML(result.filename)}">${icon('download')}下载 PDF</a><a class="secondary" href="${result.url}" target="_blank" rel="noopener">查看合并结果</a></div>${supportPrompt()}<button class="text-button" data-action="cancel">返回文件列表</button></div>`;
       return;
     }
     if (!count) {

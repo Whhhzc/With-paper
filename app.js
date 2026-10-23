@@ -22,6 +22,7 @@ const icons = {
   upload: '<path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/>',
   download: '<path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/>',
   copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
+  heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'
 };
 const icon = name => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.file}</svg>`;
@@ -72,8 +73,8 @@ document.addEventListener('click',event=>{
     const particle=document.createElement('i');effect.append(particle);
     const angle=i*Math.PI/3;
     const start=kind==='ring'?'scale(.2)':`translate(0,0) rotate(${i*60+90}deg) scale(.7)`;
-    const end=kind==='ring'?'scale(1)':`translate(${Math.cos(angle)*24}px,${Math.sin(angle)*24}px) rotate(${i*60+90}deg) scale(.35)`;
-    animations.push(particle.animate([{opacity:.65,transform:start},{opacity:0,transform:end}],{duration:420,delay:kind==='ring'?i*65:0,easing:'cubic-bezier(.15,.65,.3,1)',fill:'both'}));
+    const end=kind==='ring'?`scale(${i===0?1: .75})`:`translate(${Math.cos(angle)*36}px,${Math.sin(angle)*36}px) rotate(${i*60+90}deg) scale(.4)`;
+    animations.push(particle.animate([{opacity:.95,transform:start},{opacity:.75,offset:.35},{opacity:0,transform:end}],{duration:620,delay:kind==='ring'?i*85:0,easing:'cubic-bezier(.15,.65,.3,1)',fill:'both'}));
   }
   Promise.all(animations.map(animation=>animation.finished)).then(()=>effect.remove(),()=>effect.remove());
 },{capture:true});
@@ -148,13 +149,64 @@ function renderWorkspace(){
 }
 function renderFiles(){ state.tool.id==='merge'?Merge.render():Tools.render(); }
 function addFiles(files){ state.tool.id==='merge'?Merge.addFiles(files):Tools.addFiles(files); }
+// Set each image to a local assets/support/ PNG or JPG path when a real QR is supplied.
+const supportMethods = [
+ {id:'wechat',name:'微信支付',image:''},
+ {id:'alipay',name:'支付宝',image:''}
+];
+function supportPrompt(){
+ return `<div class="support-prompt"><span>这个工具帮到了你？</span><button class="text-button support-entry" data-action="support">${icon('heart')}支持作者</button></div>`;
+}
+function renderSupportMethod(id){
+ const method=supportMethods.find(item=>item.id===id)||supportMethods[0];
+ const area=document.querySelector('#support-payment');
+ document.querySelectorAll('[data-support-method]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.supportMethod===method.id)));
+ area.innerHTML='<div class="support-qr"></div><p class="support-payment-note" role="status"></p>';
+ const frame=area.querySelector('.support-qr');
+ const note=area.querySelector('.support-payment-note');
+ const unavailable=()=>{
+  frame.replaceChildren();frame.classList.add('support-unavailable');
+  frame.innerHTML=`${icon('heart')}<strong>${method.name}收款码暂未开放</strong><span>也欢迎把纸间分享给需要的朋友</span>`;
+  note.textContent='感谢你的心意与支持。';
+  area.querySelector('.support-save')?.remove();
+ };
+ if(!method.image){unavailable();return;}
+ note.textContent='正在加载收款码…';
+ const image=new Image();image.alt=`作者的${method.name}收款码`;image.width=220;image.height=220;
+ image.onload=()=>{
+  if(!frame.isConnected)return;
+  note.textContent='扫码后自行填写金额；手机上可保存收款码，在支付应用中识别。';
+  const save=document.createElement('a');save.className='secondary support-save';save.href=method.image;save.download=`纸间-${method.id}.png`;save.textContent='保存收款码';area.append(save);
+ };
+ image.onerror=()=>{if(frame.isConnected)unavailable();};
+ frame.append(image);image.src=method.image;
+}
+function showSupport(){
+ const dialog=document.querySelector('#info-dialog');
+ dialog.classList.add('support-dialog');
+ document.querySelector('#dialog-title').textContent='支持纸间继续更新';
+ document.querySelector('#dialog-content').innerHTML=`<p>如果纸间帮你省下了时间，欢迎随意支持一点，用于网站维护和功能更新。</p><p class="support-voluntary">支持完全自愿，不影响任何工具的使用。</p><div class="support-methods" role="group" aria-label="选择支持方式">${supportMethods.map(method=>`<button type="button" data-support-method="${method.id}" aria-pressed="false">${method.name}</button>`).join('')}</div><div id="support-payment"></div><p class="support-thanks">谢谢你的支持，也欢迎把纸间分享给需要的人。</p>`;
+ renderSupportMethod(supportMethods[0].id);dialog.showModal();
+}
+document.querySelector('#info-dialog').addEventListener('close',()=>document.querySelector('#info-dialog').classList.remove('support-dialog'));
+document.querySelector('#info-dialog').addEventListener('keydown',event=>{
+ if(event.key!=='Tab'||!event.currentTarget.classList.contains('support-dialog'))return;
+ const controls=event.currentTarget.querySelectorAll('button:not(:disabled),a[href]');
+ const first=controls[0],last=controls[controls.length-1];
+ if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+ else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
 function showInfo(kind){
+ document.querySelector('#info-dialog').classList.remove('support-dialog');
  const privacy=kind==='privacy';
  document.querySelector('#dialog-title').textContent=privacy?'文件留在你的设备':'欢迎使用纸间';
  document.querySelector('#dialog-content').innerHTML=privacy?'<p>所有文件都在浏览器中处理，没有文件上传接口。PDF、图片、识别引擎和中文/英文模型均由本站提供，不调用第三方文件处理服务。</p><p>OCR 语言模型可能缓存于浏览器，便于再次使用；你的文档和识别结果不会写入服务端。</p><p>刷新或关闭页面后本次文件和结果会清除，请及时下载。原文件不会修改。文字识别请通过网站或本地预览地址使用，以加载识别模型。</p>':'<p>选择工具并添加文件，设置参数后开始处理。页面工具可点击缩略图下的复选框选择页面；排序可拖动或用箭头调整。</p><p>多个结果提供逐个下载和 ZIP 打包。识别文字可核对编辑后复制或下载。处理中可取消，离开工具也会终止本次任务。</p><p>去水印仅支持标准水印批注和本工具写入的独立水印，提供前后对照；图片内或未标记的水印不做猜测删除。加密 PDF 和交互表单暂不支持。</p><p>按 / 搜索工具，Esc 关闭弹窗。刷新或关闭页面将清除本次文件和结果。</p>';
  document.querySelector('#info-dialog').showModal();
 }
 document.addEventListener('click',e=>{
+ const supportMethod=e.target.closest('[data-support-method]')?.dataset.supportMethod;
+ if(supportMethod){renderSupportMethod(supportMethod);return;}
+ if(e.target.closest('[data-action="support"]')){showSupport();return;}
  if(state.tool?.id==='merge'&&Merge.handleClick(e))return;
  if(state.tool&&!['merge','edit-pdf'].includes(state.tool.id)&&Tools.handleClick(e))return;
  const action=e.target.closest('[data-action]')?.dataset.action;
