@@ -29,6 +29,7 @@ for (const file of ['LICENSE', 'LICENSE.pdfium']) fs.copyFileSync(path.join(root
 // The upstream package declares MIT in its README/package metadata but ships no LICENSE file.
 fs.copyFileSync(path.join(root, 'node_modules/@pdf-lib/fontkit/README.md'), path.join(out, 'fontkit-NOTICE.md'));
 fs.copyFileSync(path.join(root, 'node_modules/@pdf-lib/fontkit/package.json'), path.join(out, 'fontkit-package.json'));
+fs.copyFileSync(path.join(root, 'node_modules/@pdf-lib/fontkit/dist/fontkit.umd.min.js'), path.join(out, 'fontkit.umd.min.js'));
 fs.copyFileSync(path.join(root, 'licenses/NotoSansSC-OFL.txt'), path.join(out, 'OFL-NotoSansSC.txt'));
 if (fs.existsSync(path.join(root, 'content-worker.js'))) {
   esbuild.buildSync({ entryPoints: [path.join(root, 'content-worker.js')], bundle: true, format: 'esm', platform: 'browser', target: 'es2022', minify: true, outfile: path.join(out, 'worker.js') });

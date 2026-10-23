@@ -23,27 +23,40 @@ const icons = {
   download: '<path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/>',
   copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
   heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
+  editDocument: '<path d="M13 3H4v18h16v-8M14 3l7 7M10 17l2-5 6-6 3 3-6 6z"/>',
+  wordDocument: '<path d="M14 2H5v20h14V7zM14 2v5h5M7 11l2 7 3-5 3 5 2-7"/>',
+  imageToPdf: '<rect x="2" y="3" width="13" height="13" rx="1"/><circle cx="6" cy="7" r="1"/><path d="m3 14 4-4 4 3 3-3M13 18h9m-3-3 3 3-3 3M4 19v3h7"/>',
+  pdfToImage: '<path d="M9 2H3v15h4M9 2v5h5M9 2l5 5v3"/><rect x="10" y="12" width="12" height="10" rx="1"/><path d="m11 20 3-4 3 3 2-2 2 3"/><circle cx="18" cy="15" r=".6"/>',
+  imageOcr: '<path d="M8 2H2v6M16 2h6v6M22 16v6h-6M2 16v6h6M7 8h10M12 8v9M9 17h6"/>',
+  pdfOcr: '<path d="M14 2H4v20h16V8zM14 2v6h6M7 11h10M12 11v7M9 18h6"/>',
+  removeWatermark: '<path d="M9 3h6l-1 8 4 4v3H6v-3l4-4zM5 21h14M3 3l18 18"/>',
+  batchWatermark: '<path d="M4 5H2v17h15v-2M10 2h7l-1 8 4 4v3H7v-3l4-4zM7 20h15"/>',
+  imageAdjust: '<rect x="2" y="2" width="15" height="15" rx="2"/><circle cx="6" cy="6" r="1"/><path d="m3 14 4-4 5 4 3-3M20 10v12M18 12l2-2 2 2M18 20l2 2 2-2M3 21h11m-9-2-2 2 2 2m7-4 2 2-2 2"/>',
+  documentScan: '<path d="M7 2H2v5M17 2h5v5M22 17v5h-5M2 17v5h5M6 5h12v14H6zM3 12h18M9 8h6M9 16h6"/>'
 };
 const icon = name => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.file}</svg>`;
 document.querySelectorAll('[data-icon]').forEach(el => el.innerHTML = icon(el.dataset.icon));
-const groups = [ ['all','全部工具','grid'], ['pdf','PDF 处理','file'], ['image','图片与 PDF','image'], ['ocr','文字识别','scan'], ['batch','批量处理','layers'] ];
+const groups = [ ['all','全部工具','grid'], ['pdf','PDF 处理','file'], ['image','文件类型转换','image'], ['ocr','文字识别','scan'], ['batch','批量处理','layers'] ];
 const tools = [
   {id:'merge',name:'合并 PDF',desc:'将多个 PDF 按顺序合成一份文件',group:'pdf',icon:'merge',popular:true,ready:true},
   {id:'split',name:'拆分 PDF',desc:'提取需要的页面，或拆成多个文件',group:'pdf',icon:'split',popular:true},
-  {id:'image-pdf',name:'图片转 PDF',desc:'将照片、截图整理成一份 PDF',group:'image',icon:'image',popular:true},
-  {id:'pdf-image',name:'PDF 转图片',desc:'将 PDF 页面导出为 JPG 或 PNG',group:'image',icon:'file',popular:true},
-  {id:'ocr-image',name:'图片提取文字',desc:'把图片中的文字变成可编辑文本',group:'ocr',icon:'scan',popular:true},
+  {id:'image-pdf',name:'图片转 PDF',desc:'将照片、截图整理成一份 PDF',group:'image',icon:'imageToPdf',popular:true},
+  {id:'pdf-image',name:'PDF 转图片',desc:'将 PDF 页面导出为 JPG 或 PNG',group:'image',icon:'pdfToImage',popular:true},
+  {id:'ocr-image',name:'图片提取文字',desc:'把图片中的文字变成可编辑文本',group:'ocr',icon:'imageOcr',popular:true},
   {id:'rename',name:'批量重命名',desc:'统一文件名称，让文件井井有条',group:'batch',icon:'rename',popular:true},
   {id:'rotate',name:'旋转 PDF',desc:'调整页面方向，阅读更顺手',group:'pdf',icon:'rotate'},
   {id:'delete',name:'删除 PDF 页面',desc:'移除空白页和不需要的内容',group:'pdf',icon:'trash'},
   {id:'sort',name:'调整页面顺序',desc:'拖动页面，重新整理文档',group:'pdf',icon:'sort'},
   {id:'watermark',name:'PDF 添加水印',desc:'为文档添加文字水印',group:'pdf',icon:'watermark'},
-  {id:'ocr-pdf',name:'扫描件提取文字',desc:'识别扫描 PDF 中的文字内容',group:'ocr',icon:'scan'},
-  {id:'batch-watermark',name:'批量添加水印',desc:'一次为多份 PDF 添加水印',group:'batch',icon:'watermark'}
+  {id:'ocr-pdf',name:'扫描件提取文字',desc:'识别扫描 PDF 中的文字内容',group:'ocr',icon:'pdfOcr'},
+  {id:'batch-watermark',name:'批量添加水印',desc:'一次为多份 PDF 添加水印',group:'batch',icon:'batchWatermark'}
 ];
-tools.push({id:'remove-watermark',name:'去除 PDF 水印',desc:'选择并移除可识别的独立水印',group:'pdf',icon:'watermark'});
-tools.splice(1,0,{id:'edit-pdf',name:'编辑 PDF',desc:'修改原有文字和图片，同步预览后下载',group:'pdf',icon:'rename'});
+tools.push({id:'remove-watermark',name:'去除 PDF 水印',desc:'选择并移除可识别的独立水印',group:'pdf',icon:'removeWatermark'});
+tools.splice(1,0,{id:'edit-pdf',name:'编辑 PDF',desc:'修改原有文字和图片，同步预览后下载',group:'pdf',icon:'editDocument'});
+tools.splice(2,0,{id:'pdf-word',name:'PDF 转 Word',desc:'保留页面版式，导出可编辑 Word 文档',group:'image',icon:'wordDocument'});
+tools.push({id:'image-tools',name:'图片压缩与转换',desc:'批量压缩、缩放图片，转换 JPG / PNG / WebP',group:'image',icon:'imageAdjust'});
+tools.push({id:'scan-document',name:'照片扫描成 PDF',desc:'四角拉正、画面增强，多页导出与本地文字识别',group:'ocr',icon:'documentScan'});
 tools.forEach(tool=>tool.ready=true);
 const main = document.querySelector('main');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -61,7 +74,7 @@ reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)document.g
 let clickEffectIndex=0;
 document.addEventListener('click',event=>{
   if(event.button!==0||event.detail!==1||reducedMotion.matches||(event.pointerType&&event.pointerType!=='mouse'))return;
-  if(event.target.closest('input,textarea,select,label,[contenteditable]:not([contenteditable="false"]),[role="textbox"],:disabled,[aria-disabled="true"],dialog,#content-edit-stage,#content-preview-stage')||!getSelection().isCollapsed)return;
+  if(event.target.closest('input,textarea,select,label,[contenteditable]:not([contenteditable="false"]),[role="textbox"],:disabled,[aria-disabled="true"],dialog,#content-edit-stage,#content-preview-stage,.scan-stage')||!getSelection().isCollapsed)return;
   let layer=document.querySelector('#click-effects');
   if(!layer){layer=document.createElement('div');layer.id='click-effects';layer.setAttribute('aria-hidden','true');document.body.append(layer);}
   if(layer.childElementCount>=6)layer.firstElementChild.remove();
@@ -80,19 +93,7 @@ document.addEventListener('click',event=>{
 },{capture:true});
 
 function fileBadge(tool){
-  const glyphs={
-    merge:'<path d="M7 8h8v11H7zM17 13h8v11h-8z" fill="none" stroke="white" stroke-width="2"/><path d="M14 24h-4v-3m8-13h4v3" fill="none" stroke="white" stroke-width="2"/>',
-    split:'<path d="M9 8v16M23 8v16M13 16h6m-6 0 3-3m-3 3 3 3m3-3-3-3m3 3-3 3" fill="none" stroke="white" stroke-width="2"/>',
-    image:'<rect x="7" y="8" width="18" height="16" rx="1" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="13" r="2" fill="white"/><path d="m8 23 6-6 4 4 3-3 4 5" fill="none" stroke="white" stroke-width="2"/>',
-    scan:'<path d="M8 8h16v4h-2v-2h-5v13h3v2h-8v-2h3V10h-5v2H8z" fill="white"/>',
-    rotate:'<path d="M9 12a8 8 0 1 1-1 7M8 6v7h7" fill="none" stroke="white" stroke-width="2.5"/>',
-    trash:'<path d="M8 10h16M13 7h6M11 13v12h10V13M15 15v7M18 15v7" fill="none" stroke="white" stroke-width="2"/>',
-    sort:'<path d="M11 7v18m-4-4 4 4 4-4M21 25V7m-4 4 4-4 4 4" fill="none" stroke="white" stroke-width="2"/>',
-    watermark:'<path d="M12 7h8v7l4 5v3H8v-3l4-5zM9 26h14" fill="none" stroke="white" stroke-width="2"/>',
-    rename:'<path d="M7 8h12v17H7zM22 7v18M19 7h6M19 25h6M10 13h6M10 18h6" fill="none" stroke="white" stroke-width="2"/>',
-    file:'<path d="M9 5h10l5 5v17H9z" fill="white"/><path d="M19 5v6h5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 16h9M12 20h9" stroke="currentColor" stroke-width="2"/>'
-  };
-  return `<svg class="file-badge badge-${tool.group}" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="5" fill="currentColor"/>${glyphs[tool.icon]||glyphs.file}</svg>`;
+  return `<svg class="file-badge badge-${tool.group}" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="5" fill="currentColor"/><g transform="translate(4 4)" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons[tool.icon]||icons.file}</g></svg>`;
 }
 const state = {group:'all',query:'',tool:null,files:[],phase:'select',feedback:''};
 const escapeHTML = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -110,7 +111,7 @@ function renderHome(){
 function filterTools(){
   const q=state.query.trim().toLowerCase().replace(/\s/g,'');
   const matches=tools.filter(t=>(state.group==='all'||t.group===state.group)&&`${t.name}${t.desc}`.toLowerCase().replace(/\s/g,'').includes(q));
-  const descriptions={pdf:'整理文档页面',image:'图片与文档互转',ocr:'提取可编辑文本',batch:'同时处理多个文件'};
+  const descriptions={pdf:'整理文档页面',image:'图片处理与文件互转',ocr:'扫描纸张与提取文字',batch:'同时处理多个文件'};
   document.querySelector('#tool-list').innerHTML=matches.length?groups.filter(([id])=>id!=='all'&&matches.some(t=>t.group===id)).map(([id,name])=>`<section class="directory-group"><div class="group-heading"><h3>${name}</h3><p>${descriptions[id]}</p></div><div class="group-tools">${matches.filter(t=>t.group===id).map(t=>`<a class="tool-row" href="#tool/${t.id}">${fileBadge(t)}<div><h4>${t.name}</h4><p>${t.desc}</p></div></a>`).join('')}</div></section>`).join(''):'<div class="empty-results">没有找到相关工具。试试“图片”或“PDF”。</div>';
   document.querySelector('#tool-count').textContent=`${matches.length} 个工具`;
   document.querySelector('#popular-section').hidden=Boolean(q)||state.group!=='all';
@@ -126,6 +127,7 @@ function renderWorkspace(){
  document.title=`${tool.name} · 纸间`;
  document.querySelector('#breadcrumb').innerHTML=`<a href="#home">全部工具</a><span>/</span><strong>${tool.name}</strong>`;
  if(tool.id==='edit-pdf'){PdfEditor.mount();return;}
+ if(['image-tools','scan-document'].includes(tool.id)){ImageTools.mount();return;}
  main.innerHTML=`<div class="workspace-heading"><div class="hero-file-icon">${fileBadge(tool)}<span>${isOCR()?'TXT':tool.id==='pdf-image'?'JPG':tool.id==='rename'?'ABC':'PDF'}</span></div><h1>${tool.name}</h1><p>${tool.desc}</p></div>
  <div class="workspace-grid"><section class="files-panel" aria-label="文件工作区"><div class="panel-toolbar"><strong>${isOCR()?'原始文件':'文件列表'} <span id="file-count" class="toolbar-sub"></span></strong><button class="text-button" data-action="clear">清空列表</button></div><div id="file-content"></div><div id="file-feedback" class="file-feedback" role="alert"></div><input class="file-input" id="file-input" type="file" multiple accept="${acceptTypes()}" aria-label="选择本地文件"></section><aside class="settings-panel"><h2>${isOCR()?'识别设置':tool.id==='merge'?'合并设置':'处理设置'}</h2>${outputField()}<div class="setting-separator"></div><div class="summary-line"><span>已选择文件</span><strong id="selected-count">0 个</strong></div><button class="primary" id="run-button" data-action="run">开始处理</button><p class="setting-footnote">文件在本地处理，原文件不会修改。</p></aside></div>
  <div class="demo-notice">${icon('info')}<span>文件在浏览器本地处理。</span></div><section class="instruction-block"><h2>使用方法</h2><div class="instruction-list"><span><b class="step-number">1</b>选择文件</span><span><b class="step-number">2</b>${isOCR()?'识别并核对文字':'调整顺序和设置'}</span><span><b class="step-number">3</b>${isOCR()?'复制或下载文字':'处理并下载结果'}</span></div></section>`;
@@ -144,6 +146,13 @@ function renderWorkspace(){
    document.querySelector('.setting-footnote').textContent='结果保存在本机，原文件不会修改。';
    document.querySelector('.demo-notice span').textContent=tool.id==='remove-watermark'?'仅移除明确识别的独立水印，请核对前后效果。图片内和未标记的水印暂不支持。':tool.group==='ocr'?'识别引擎和语言模型从本站加载，文件内容不上传；请核对识别结果。':tool.id==='rename'?'生成重命名副本，不修改原文件。':tool.id==='image-pdf'?'图片在本机转换。多个结果可打包下载。':'本地处理；加密文件及交互表单暂不支持。提取或重新排序页面不保留原文件书签。';
    Tools.setup();
+   if(tool.id==='pdf-word'){
+     document.querySelector('.hero-file-icon > span').textContent='DOCX';
+     document.querySelector('#run-button').textContent='转换为 Word';
+     document.querySelector('.demo-notice span').textContent='优先读取原文字，扫描页使用本地 OCR。保留页尺寸与定位文字；图形和表格边框以图片保留，复杂字体及识别文字请在 Word 中核对。';
+     document.querySelector('.instruction-list span:nth-child(2)').innerHTML='<b class="step-number">2</b>选择页面与识别方式';
+     document.querySelector('.instruction-list span:nth-child(3)').innerHTML='<b class="step-number">3</b>下载 Word 并核对';
+   }
  }
  renderFiles();
 }
@@ -208,7 +217,7 @@ document.addEventListener('click',e=>{
  if(supportMethod){renderSupportMethod(supportMethod);return;}
  if(e.target.closest('[data-action="support"]')){showSupport();return;}
  if(state.tool?.id==='merge'&&Merge.handleClick(e))return;
- if(state.tool&&!['merge','edit-pdf'].includes(state.tool.id)&&Tools.handleClick(e))return;
+ if(state.tool&&!['merge','edit-pdf','image-tools','scan-document'].includes(state.tool.id)&&Tools.handleClick(e))return;
  const action=e.target.closest('[data-action]')?.dataset.action;
  if(action==='help'||action==='privacy')showInfo(action);
  if(action==='close-dialog')document.querySelector('#info-dialog').close();
@@ -233,6 +242,7 @@ document.querySelector('#navigation').addEventListener('click',e=>{
  }
 });
 function route(){
+ ImageTools.reset();
  PdfEditor.reset();
  Merge.reset();
  Tools.reset();

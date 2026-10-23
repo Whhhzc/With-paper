@@ -59,6 +59,7 @@ dialog[open]::backdrop{opacity:1}
 #toast{display:block;opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,8px);transition:opacity 180ms var(--motion-ease),transform 180ms var(--motion-ease),visibility 0s 180ms}
 #toast.visible{opacity:1;visibility:visible;transform:translate(-50%,0);transition-delay:0s}
 /* Click accents stay outside document layout and never intercept input. */
+.word-conversion-report{padding:0 20px 18px;color:var(--muted);font-size:12px;line-height:1.9;overflow-wrap:anywhere}.word-conversion-report h3{margin-bottom:8px;color:var(--ink)}.word-conversion-report p+p{margin-top:8px}
 #click-effects{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:80}
 .click-effect{position:absolute;width:0;height:0;color:var(--primary);pointer-events:none}
 .click-effect i{position:absolute;display:block;pointer-events:none}

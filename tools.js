@@ -31,6 +31,7 @@ const Tools = (() => {
       case 'remove-watermark': return '<p class="settings-description">选择左侧识别出的独立水印，点击“预览去除效果”核对前后变化后下载。</p><p class="settings-description">支持标准 Watermark 批注和本工具写入的独立水印。图片内及未明确标记的水印不会猜测删除。</p>' + outputField();
       case 'image-pdf': return field('输出方式', '<select id="image-mode"><option value="combined">所有图片合成一份 PDF</option><option value="each">每张图片生成独立 PDF</option></select>') + field('页面尺寸', '<select id="image-page-size"><option value="a4">A4（自动横向 / 纵向）</option><option value="fit">适应图片大小</option></select>') + outputField();
       case 'pdf-image': return field('图片格式', '<select id="image-format"><option value="png">PNG</option><option value="jpg">JPG</option></select>') + field('清晰度', '<select id="render-scale"><option value="1">标准 · 72 DPI</option><option value="2" selected>清晰 · 144 DPI</option><option value="3">高清 · 216 DPI</option></select>') + rangeField();
+      case 'pdf-word': return rangeField() + field('扫描与图片文字', '<select id="word-ocr"><option value="auto">自动识别扫描页</option><option value="all">同时识别图片内文字（较慢）</option></select>', '原生文字直接提取；图文混合页可选择同时识别图片文字。') + field('识别语言', '<select id="ocr-language"><option value="chi_sim+eng">简体中文 + 英文</option><option value="chi_sim">简体中文</option><option value="eng">英文</option></select>') + field('输出文件名', '<input id="tool-output-name" placeholder="留空使用原文件名">', '导出 .docx；多份文件可打包下载。') + '<p class="settings-description">尽量保留页面尺寸、文字位置、字号和图形。文字以定位文本框编辑，不自动重排；表格边框和插图保留为图片，原字体缺失时可能替换。</p>';
       case 'ocr-image': case 'ocr-pdf': return field('识别语言', '<select id="ocr-language"><option value="chi_sim+eng">简体中文 + 英文</option><option value="chi_sim">简体中文</option><option value="eng">英文</option></select>', '首次使用从本站加载本地模型；文件不会上传。') + (id() === 'ocr-pdf' ? rangeField() : '') + '<p class="settings-description">识别完成后请核对文字，可编辑、复制或下载 TXT。</p>';
       case 'rename': return field('文件名前缀', '<input id="rename-prefix" value="办公资料" maxlength="100">') + field('起始序号', '<input id="rename-start" type="number" min="1" step="1" value="1">') + field('序号位数', '<select id="rename-digits"><option value="3">3 位（001）</option><option value="2">2 位（01）</option><option value="4">4 位（0001）</option></select>') + '<p class="settings-description">保留原扩展名与文件内容，生成重命名副本并打包下载。</p>';
     }
@@ -199,7 +200,10 @@ const Tools = (() => {
   }
   async function packageOutputs(entries, signal) {
     const custom = value('#tool-output-name').trim();
-    if (entries.length === 1 && custom) entries[0].name = `${cleanName(custom.replace(/\.pdf$/i, ''))}.pdf`;
+    if (entries.length === 1 && custom) {
+      const extension=id()==='pdf-word'?'docx':'pdf';
+      entries[0].name = `${cleanName(custom.replace(id()==='pdf-word'?/\.(?:docx|pdf)$/i:/\.pdf$/i, ''))}.${extension}`;
+    }
     outputs = uniqueEntries(entries).map(item => ({ ...item, url: URL.createObjectURL(item.blob) }));
     if (outputs.length > 1 || id() === 'rename') {
       const files = outputs.map(item => new File([item.blob], item.name));
@@ -244,6 +248,11 @@ const Tools = (() => {
               entries.push({ name: `${item.name.replace(/\.pdf$/i, '')}_第${number}页.${format}`, blob });
             }
           } finally { await document.destroy(); }
+        }
+      } else if (tool === 'pdf-word') {
+        for(const item of state.files){
+          const result=await WordConverter.convert(item.file,{pages:selectedRange(item.pages),ocr:value('#word-ocr'),language:value('#ocr-language')},signal,progress,ocrJob,pdfJob);
+          signal.throwIfAborted();entries.push(result);
         }
       } else if (tool === 'rename') {
         const names = renamed(); entries = state.files.map((item, index) => ({ name: names[index], blob: item.file }));
@@ -351,6 +360,7 @@ const Tools = (() => {
       area.innerHTML = `<div class="result-panel"><div class="result-icon">${icon('check')}</div><h2>${id() === 'remove-watermark' ? '去水印预览已生成' : '处理完成'}</h2><p>共生成 ${outputs.length} 个文件，原文件未修改。</p>${zipUrl ? `<a class="primary" href="${zipUrl}" download="${state.tool.name}.zip">${icon('download')}打包下载 ZIP</a>` : ''}</div>`;
     }
     if (id() === 'remove-watermark') area.insertAdjacentHTML('beforeend', '<div class="comparison"><figure><figcaption>处理前</figcaption><img id="comparison-0" alt="处理前页面"></figure><figure><figcaption>处理后</figcaption><img id="comparison-1" alt="去除独立水印后页面"></figure></div>');
+    if (id() === 'pdf-word') area.insertAdjacentHTML('beforeend', `<div class="word-conversion-report"><h3>转换说明</h3>${outputs.map(output=>`<p><strong>${escapeHTML(output.name)}</strong>：${output.pages} 页，直接提取 ${output.report.nativePages} 页，OCR 处理 ${output.report.ocrPages} 页，共 ${output.report.characters} 个文字字符。${output.report.lowConfidence?`有 ${output.report.lowConfidence} 处识别结果置信度较低，请重点核对。`:''}</p>${output.report.warnings.map(warning=>`<p>${escapeHTML(warning)}</p>`).join('')}`).join('')}<p>文字可以在文本框内编辑；图形和表格线以图片保留。字体替换、扫描件及复杂排版可能产生差异，请用 Word 或 WPS 打开后核对。</p></div>`);
     area.insertAdjacentHTML('beforeend', `${supportPrompt()}<div class="output-list">${recognition ? `<p>原始识别文本（未包含编辑）${zipUrl ? ` · <a href="${zipUrl}" download="识别文本.zip">打包下载</a>` : ''}</p>` : ''}${outputs.map(output => `<div class="output-row"><div><strong>${escapeHTML(output.name)}</strong><small>${sizeLabel(output.blob.size)}${output.pages ? ` · ${output.pages} 页` : ''}</small></div><a href="${output.url}" download="${escapeHTML(output.name)}">下载</a>${output.blob.type.startsWith('image/') || output.blob.type === 'application/pdf' ? `<a href="${output.url}" target="_blank" rel="noopener">预览</a>` : ''}</div>`).join('')}</div><p class="sample-line"><button data-action="cancel">返回文件列表</button></p>`);
   }
 

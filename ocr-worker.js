@@ -19,8 +19,10 @@ self.onmessage = async ({ data }) => {
     });
     const entries = [];
     for (index = 0; index < files.length; index++) {
-      const { data: result } = await worker.recognize(new Uint8Array(await files[index].arrayBuffer()));
-      entries.push({ name: files[index].name, text: result.text, confidence: result.confidence });
+      const { data: result } = await worker.recognize(new Uint8Array(await files[index].arrayBuffer()), {}, { text:true, blocks:Boolean(options.layout) });
+      const entry={ name: files[index].name, text: result.text, confidence: result.confidence };
+      if(options.layout)entry.blocks=(result.blocks||[]).map(block=>({paragraphs:block.paragraphs.map(paragraph=>({lines:paragraph.lines.map(line=>({text:line.text,confidence:line.confidence,bbox:line.bbox,rowAttributes:line.rowAttributes}))}))}));
+      entries.push(entry);
       progress(`已识别 ${index + 1} / ${files.length} 页`, index + 1, files.length);
     }
     await worker.terminate();

@@ -1,6 +1,6 @@
 const Media = (() => {
   const base = new URL('vendor/pdfjs/', location.href).href;
-  async function pdf(file, signal) {
+  async function pdf(file, signal, options = {}) {
     signal?.throwIfAborted();
     const bytes = new Uint8Array(await file.arrayBuffer());
     signal?.throwIfAborted();
@@ -8,7 +8,7 @@ const Media = (() => {
     const port = new Worker(url);
     URL.revokeObjectURL(url);
     const worker = new PdfRenderer.PDFWorker({ port });
-    const task = PdfRenderer.getDocument({ data: bytes, worker, isEvalSupported: false, cMapUrl: `${base}cmaps/`, cMapPacked: true, standardFontDataUrl: `${base}standard_fonts/`, wasmUrl: `${base}wasm/`, iccUrl: `${base}iccs/`, useWasm: location.protocol !== 'file:', verbosity: 0 });
+    const task = PdfRenderer.getDocument({ data: bytes, worker, isEvalSupported: false, fontExtraProperties:Boolean(options.fontExtraProperties), cMapUrl: `${base}cmaps/`, cMapPacked: true, standardFontDataUrl: `${base}standard_fonts/`, wasmUrl: `${base}wasm/`, iccUrl: `${base}iccs/`, useWasm: location.protocol !== 'file:', verbosity: 0 });
     const onAbort = () => { void destroy().catch(() => {}); };
     const destroy = async () => { signal?.removeEventListener('abort', onAbort); try { await task.destroy(); } finally { worker.destroy(); port.terminate(); } };
     signal?.addEventListener('abort', onAbort, { once: true });

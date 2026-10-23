@@ -6,6 +6,8 @@ const source = [
   fs.readFileSync(path.join(library, 'dist/pdf-lib.min.js'), 'utf8'),
   fs.readFileSync(path.join(root, 'node_modules/fflate/umd/index.js'), 'utf8'),
   fs.readFileSync(path.join(root, 'pdf-engine.js'), 'utf8'),
+  fs.readFileSync(path.join(root, 'word-engine.js'), 'utf8'),
+  fs.readFileSync(path.join(root, 'scan-pdf-engine.js'), 'utf8'),
   fs.readFileSync(path.join(root, 'pdf-worker.js'), 'utf8'),
 ].join('\n');
 fs.mkdirSync(path.join(root, 'vendor'), { recursive: true });

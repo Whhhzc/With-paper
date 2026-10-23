@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build-pdf-worker.cjs && node scripts/build-media.cjs && node scripts/build-content-editor.cjs && node scripts/package-site.cjs",
-    "test:pdf": "node --test tests/pdf-merge.test.cjs tests/phase-one.test.cjs tests/content-editor.test.mjs"
+    "test:pdf": "node --test tests/pdf-merge.test.cjs tests/phase-one.test.cjs tests/content-editor.test.mjs tests/pdf-word.test.cjs",
+    "test:images": "node --test tests/image-tools.test.cjs"
   },
   "dependencies": {
     "@embedpdf/pdfium": "2.15.1",
